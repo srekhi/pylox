@@ -110,8 +110,8 @@ class Scanner:
 	def _is_digit(self, char):
 		return char >= '0' and char <= '9'
 
-	def _handle_number(self, char):
-		while (self.is_digit(self._peek())):
+	def _handle_number(self):
+		while (self._is_digit(self._peek())):
 			self._advance();
 
 		if self._peek() == '.' and self.is_digit(self._peek_next()):
@@ -119,7 +119,7 @@ class Scanner:
 			while self.is_digit(self._peek()):
 				self._advance()
 
-		self._add_token(TokenType.NUMBER, float(source[start:current]))
+		self._add_token(TokenType.NUMBER, float(self.source[self._start:self._current]))
 
 	def _peek_next(self):
 		if self._current + 1 >= len(self.source):
@@ -141,7 +141,7 @@ class Scanner:
 		self._advance()
 
 		# strip surrounding quotes 
-		value = source[self._start + 1: self._current]
+		value = self.source[self._start + 1: self._current]
 		self._add_token(TokenType.STRING, value)
 
 
@@ -157,7 +157,7 @@ class Scanner:
 		if (self.is_at_end()):
 			return False
 
-		if (source[self._current] != expected):
+		if (self.source[self._current] != expected):
 			return False
 
 		self._current += 1
@@ -166,7 +166,5 @@ class Scanner:
 	def _peek(self):
 		if self.is_at_end():
 			return '\0'
-		if self._current >= len(self.source):
-			import pdb; pdb.set_trace()
 
 		return self.source[self._current]
