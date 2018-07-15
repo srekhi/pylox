@@ -16,18 +16,20 @@ class Parser:
 	class ParseError(Exception):
 		pass 
 
-	def __init__(tokens):
+	def __init__(self, tokens):
 		self.tokens = tokens 
 		self.current = 0
+		self.errors = []
 
 	def parse(self):
 		try:
 			return self._expression()
-		except ParseError as e:
+		except Parser.ParseError as e:
+			print("IN ERROR %s" % e)
 			return None # will sync here.
 	
 	def _expression(self):
-		self._equality()
+		return self._equality()
 
 	def _equality(self):
 		expr = self._comparison()
@@ -42,14 +44,14 @@ class Parser:
 		expr = self._addition()
 		while self._match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL):
 			operator = self._previous()
-			right = addition()
+			right = self._addition()
 			expr = Binary(expr, operator, right)
 
 		return expr 
 
 	def _addition(self):
 		expr = self._multiplication()
-		while self._match(TokenType.MINUS, TokenType.TokenType.PLUS):
+		while self._match(TokenType.MINUS, TokenType.PLUS):
 			operator = self._previous()
 			right = self._multiplication()
 			expr = Binary(expr, operator, right)
@@ -65,36 +67,37 @@ class Parser:
 
 		return expr 
 
-	def unary(self):
+	def _unary(self):
 		if self._match(TokenType.BANG, TokenType.MINUS):
-			operator = self.previous()
+			operator = self._previous()
 			operand = self._unary()
 			return Unary(operator, operand)
 
-		return self.primary()
+		return self._primary()
 
-	def primary(self):
+	def _primary(self):
 		if self._match(TokenType.FALSE):
 			return Literal(False)
-		elif self._match(True):
+		elif self._match(TokenType.TRUE):
 			return Literal(True)
-		elif self._match(None):
+		elif self._match(TokenType.NIL):
 			return Literal(None)
 		elif self._match(TokenType.NUMBER, TokenType.STRING):
-			return Literal(previous().literal)
+			return Literal(self._previous().literal)
 		elif self._match(TokenType.LEFT_PAREN):
 			expr = self._expression()
-			consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
+			self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
 			return Grouping(expr)
 
-		return error(peek(), 'Expect expression')
-	def consume(self, token_type, message):
-		if self.check(token_type):
-			return self.advance()
+		return self._error(self._peek(), 'Expect expression')
 
-		return self._error(peek(), message)
+	def _consume(self, token_type, message):
+		if self._check(token_type):
+			return self._advance()
 
-	def match(self, *token_types):
+		return self._error(self._peek(), message)
+
+	def _match(self, *token_types):
 		for token_type in token_types:
 			if self._check(token_type):
 				self._advance()
@@ -102,7 +105,7 @@ class Parser:
 
 		return False 
 
-	def check(self, token_type):
+	def _check(self, token_type):
 		if self._is_at_end():
 			return False 
 
@@ -115,18 +118,19 @@ class Parser:
 		return self._previous()
 
 	def _is_at_end(self):
-		return self.peek().type == TokenType.EOF
+		return self._peek().type == TokenType.EOF
 
 	def _peek(self):
-		return self.tokens[current]
+		return self.tokens[self.current]
 
 	def _previous(self):
-		return self.tokens[current - 1]
+		return self.tokens[self.current - 1]
 
 	def _error(self, token, msg):
 		from lox import error as lox_error
 		lox_error(token, msg)
-		return ParseError()
+		self.errors.append(msg)
+		return Parser.ParseError()
 
 	def synchronize(self):
 		self._advance()

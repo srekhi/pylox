@@ -87,6 +87,7 @@ class Scanner:
 				self._handle_identifier()
 			else:
 				Lox.error(self._line, 'Unexpected character')
+				scanner.errors.append('Unexpected character')
 
 	def _handle_identifier(self):
 		while (self.is_alpha_numeric(self._peek())):
@@ -135,6 +136,7 @@ class Scanner:
 
 		if self.is_at_end():
 			Lox.error(self._line, 'Unterminated string')
+			scanner.errors.append('Unexpected character')
 			return 
 
 		# advance past closing '"'

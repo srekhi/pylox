@@ -1,10 +1,11 @@
 import sys 
 from scanner import Scanner
+from parser import Parser 
+from ast_printer import AstPrinter
 
 hadError = False 
 
 def run_file(file_path):
-  global hadError
   f = open(file_path)
   run(f.read())
   if hadError:
@@ -15,20 +16,38 @@ def run_prompt():
   while True:
     run(input('>>> '))
     hadError = False;
+    # print('HAD ERROR IS RESET')
 
 def run(source):
   scanner = Scanner(source)
   tokens = scanner.scan_tokens()
-  for token in tokens:
-    print(token)
+  [print(t) for t in tokens]
+  parser = Parser(tokens)
+  expression = parser.parse()
+  
+  hadError = len(scanner.errors) + len(parser.errors)
+  print("HAD ERROR VALUE IS %s" % hadError)
+  if (hadError): 
+    return 
+
+  interpreter.interpret(expression)
+
+  # print(AstPrinter().print(expression))
+
+hadRuntimeError = False 
+def runtimeError(err):
+  global hadRuntimeError
+  print(err)
+  hadRuntimeError = True 
 
 def error(line, message):
   report(line, '', message)
 
 def report(line, where, message):
   print ("[line %s] Error %s: %s" % (line, where, message))
+  import pdb; pdb.set_trace()
   global hadError
-  hadError = False 
+  hadError = True
 
 def main(arguments):
   if len(arguments) > 1:
