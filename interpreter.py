@@ -6,10 +6,10 @@ class Interpreter(ExprVisitor):
 			super().__init__(message)
 			self.token = token
 
-	def interpret(expression):
+	def interpret(statements):
 		try:
-			val = evaluate(expression)
-			stringify(val)
+			for statement in statements:
+				execute(statement)
 		except RuntimeException as error:
 			Lox.runtimeError(error)
 
@@ -107,3 +107,6 @@ class Interpreter(ExprVisitor):
 
 	def evaluate(self, expr):
 		expr.accept(self)
+
+	def execute(self, stmt):
+	    stmt.accept(this);

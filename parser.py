@@ -1,15 +1,25 @@
 # Grammar 
-# expression     → equality ;
-# equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-# comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
-# addition       → _multiplication ( ( "-" | "+" ) _multiplication )* ;
-# _multiplication → unary ( ( "/" | "*" ) unary )* ;
+# program 		 → statement* EOF;
+# declaration    → varDecl | statement ;
+# varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+# statement 	 → exprStmt | printStmt
+# exprStmt       → expression ";"
+# printStmt      → "print" expression ";"
+# expression     → equality;
+# equality       → comparison ( ( "!=" | "==" ) comparison )*;
+# comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )*;
+# addition       → _multiplication ( ( "-" | "+" ) _multiplication )*;
+# _multiplication → unary ( ( "/" | "*" ) unary )*;
 # unary          → ( "!" | "-" ) unary
-#              | primary ;
-# primary        → NUMBER | STRING | "false" | "true" | "nil"
-#               | "(" expression ")" ;
+#              | primary;
+# primary        → NUMBER | STRING | IDENTIFIER | "false" | "true" | "nil"
+#               | "(" expression ")";
+# identifier
+
+# identifier = name of variable being accessed.
 
 from expr import * 
+from stmt import * 
 from tokens import TokenType 
 
 class Parser:
@@ -22,12 +32,43 @@ class Parser:
 		self.errors = []
 
 	def parse(self):
+		statements = []
+		while not self._is_at_end():
+			statements.append(self._declaration())
+
+		return statements
+
+	def var_declaration(self):
+		name = self.consume(TokenType.IDENTIFIER, 'Expect variable name')
+
+		initializer = None 
+		if self._match(TokenType.EQUAL):
+			initializer = self.expression()
+
+		self._consume(TokenType.SEMICOLON, "Expect ; after variable declaration")
+		return new Var(name, initializer)
+
+	def statement(self):
+		if self._match(TokenType.PRINT):
+			return self._printStatement()
+
+		return self._expressionStatement()
+
+	def _declaration(self):
 		try:
-			return self._expression()
-		except Parser.ParseError as e:
-			print("IN ERROR %s" % e)
-			return None # will sync here.
-	
+			if match(VAR):
+				return self.varDeclaration()
+		except ParseError:
+			self.synchronize()
+
+	def _printStatement(self):
+		value = self._expression()
+	    consume(SEMICOLON, "Expect ';' after value.");
+	    return Print(value);
+
+	def _expressionStatement(self):
+		expr = self._expression()
+
 	def _expression(self):
 		return self._equality()
 
@@ -38,6 +79,7 @@ class Parser:
 			right = self._comparison()
 			expr = Binary(expr, operator, right)
 
+		# 3 == (3==5) == 2
 		return expr 
 
 	def _comparison(self):
@@ -88,7 +130,8 @@ class Parser:
 			expr = self._expression()
 			self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
 			return Grouping(expr)
-
+		elif self._match(TokenType.IDENTIFIER):
+			return Variable(self._previous())
 		return self._error(self._peek(), 'Expect expression')
 
 	def _consume(self, token_type, message):

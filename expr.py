@@ -57,3 +57,8 @@ class Unary(Expr):
 
 	def accept(self, visitor):
 		return visitor.visitUnaryExpr(self)
+
+class Variable(Expr):
+	def __init__(self, name):
+		self.name = name 
+	

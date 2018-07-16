@@ -21,16 +21,15 @@ def run_prompt():
 def run(source):
   scanner = Scanner(source)
   tokens = scanner.scan_tokens()
-  [print(t) for t in tokens]
   parser = Parser(tokens)
-  expression = parser.parse()
+  statements = parser.parse()
   
   hadError = len(scanner.errors) + len(parser.errors)
   print("HAD ERROR VALUE IS %s" % hadError)
   if (hadError): 
     return 
 
-  interpreter.interpret(expression)
+  interpreter.interpret(statements)
 
   # print(AstPrinter().print(expression))
 
